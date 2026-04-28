@@ -15,9 +15,15 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF3949AB),
-    secondary = Color(0xFF1A237E),
-    tertiary = Color(0xFF03A9F4)
+    primary = Color(0xFF9FA8DA),
+    secondary = Color(0xFF3949AB),
+    tertiary = Color(0xFF81D4FA),
+    background = Color(0xFF121212),
+    surface = Color(0xFF1E1E1E),
+    onPrimary = Color.Black,
+    onSecondary = Color.White,
+    onBackground = Color.White,
+    onSurface = Color.White
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -27,8 +33,9 @@ private val LightColorScheme = lightColorScheme(
     background = Color(0xFFF5F7FA),
     surface = Color.White,
     onPrimary = Color.White,
-    onSurface = Color(0xFF1A237E),
-    onBackground = Color.Black
+    onSecondary = Color.White,
+    onBackground = Color.Black,
+    onSurface = Color(0xFF1A237E)
 )
 
 @Composable
@@ -47,16 +54,16 @@ fun AutoMobileShopManagementTheme(
     }
 
     val view = LocalView.current
+    val context = LocalContext.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context.findActivity())?.window
+            val window = (context.findActivity())?.window
             if (window != null) {
-                // For Android 15+, edge-to-edge is forced. 
-                // We must ensure the icons are dark on light backgrounds.
-                WindowCompat.getInsetsController(window, view).apply {
-                    isAppearanceLightStatusBars = !darkTheme
-                    isAppearanceLightNavigationBars = !darkTheme
-                }
+                window.statusBarColor = Color.Transparent.toArgb()
+                window.navigationBarColor = Color.Transparent.toArgb()
+                val insetsController = WindowCompat.getInsetsController(window, view)
+                insetsController.isAppearanceLightStatusBars = !darkTheme
+                insetsController.isAppearanceLightNavigationBars = !darkTheme
             }
         }
     }

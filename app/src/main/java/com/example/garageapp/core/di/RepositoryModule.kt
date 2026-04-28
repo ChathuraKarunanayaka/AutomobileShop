@@ -42,4 +42,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCounterRepository(impl: CounterRepositoryImpl): CounterRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWorkshopRepository(impl: WorkshopRepositoryImpl): WorkshopRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindReportRepository(impl: ReportRepositoryImpl): ReportRepository
 }

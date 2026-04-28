@@ -5,10 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.Assignment
-import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,7 +26,9 @@ fun DashboardScreen(
     onCustomersClick: () -> Unit = {},
     onVehiclesClick: () -> Unit = {},
     onJobCardsClick: () -> Unit = {},
-    onInvoicesClick: () -> Unit = {}
+    onInvoicesClick: () -> Unit = {},
+    onReportsClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {}
 ) {
     val stats by viewModel.stats.collectAsState()
     
@@ -37,6 +36,11 @@ fun DashboardScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Garage Dashboard", fontWeight = FontWeight.Bold) },
+                actions = {
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color(0xFF1A237E))
+                    }
+                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color.White,
                     titleContentColor = Color(0xFF1A237E)
@@ -84,6 +88,7 @@ fun DashboardScreen(
                 QuickActionButton("Manage Vehicles", Icons.Default.DirectionsCar, Color(0xFF1A237E), onVehiclesClick)
                 QuickActionButton("Job Cards", Icons.Default.Assignment, Color(0xFF1A237E), onJobCardsClick)
                 QuickActionButton("Invoices", Icons.Default.Receipt, Color(0xFF1A237E), onInvoicesClick)
+                QuickActionButton("Reports & Profit", Icons.Default.BarChart, Color(0xFF455A64), onReportsClick)
             }
             
             Spacer(modifier = Modifier.height(24.dp))

@@ -15,13 +15,23 @@ class GetJobCardsUseCase @Inject constructor(
     operator fun invoke(): Flow<List<JobCard>> = repository.getJobCards()
 }
 
+class GetJobCardByIdUseCase @Inject constructor(
+    private val repository: JobCardRepository
+) {
+    suspend operator fun invoke(jobCardId: String): JobCard? = repository.getJobCardById(jobCardId)
+}
+
+class UpdateJobCardUseCase @Inject constructor(
+    private val repository: JobCardRepository
+) {
+    suspend operator fun invoke(jobCard: JobCard) = repository.updateJobCard(jobCard)
+}
+
 class AddJobCardUseCase @Inject constructor(
     private val repository: JobCardRepository,
     private val counterRepository: CounterRepository
 ) {
     suspend operator fun invoke(jobCard: JobCard) {
-        // Here we could implement the JC-date-001 logic
-        // For simplicity in this step, we assume jobCardNumber is already set or handled
         repository.addJobCard(jobCard)
     }
 }

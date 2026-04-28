@@ -58,3 +58,8 @@ interface CounterRepository {
     suspend fun getCounter(shopId: String): Counter?
     suspend fun updateCounter(counter: Counter)
 }
+
+interface WorkshopRepository {
+    fun getWorkshopDetails(shopId: String): Flow<WorkshopDetails?>
+    suspend fun updateWorkshopDetails(details: WorkshopDetails)
+}

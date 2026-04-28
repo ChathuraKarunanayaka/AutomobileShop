@@ -15,6 +15,8 @@ data class Invoice(
     val customerPhone: String = "",
     val vehicleNumber: String = "",
     val subtotal: Double = 0.0,
+    val totalCost: Double = 0.0,
+    val totalProfit: Double = 0.0,
     val discount: Double = 0.0,
     val totalAmount: Double = 0.0,
     val paidAmount: Double = 0.0,

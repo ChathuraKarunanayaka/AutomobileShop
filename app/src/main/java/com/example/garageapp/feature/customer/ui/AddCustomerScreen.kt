@@ -30,16 +30,16 @@ fun AddCustomerScreen(
     
     val isSaving by viewModel.isSaving.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineOfScope()
+    val scope = rememberCoroutineScope()
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = Color.Black,
-        unfocusedTextColor = Color.Black,
-        focusedLabelColor = Color(0xFF1A237E),
+        focusedTextColor = MaterialTheme.colorScheme.onBackground,
+        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+        focusedLabelColor = MaterialTheme.colorScheme.primary,
         unfocusedLabelColor = Color.Gray,
-        focusedBorderColor = Color(0xFF1A237E),
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
         unfocusedBorderColor = Color.LightGray,
-        cursorColor = Color(0xFF1A237E)
+        cursorColor = MaterialTheme.colorScheme.primary
     )
 
     Scaffold(
@@ -53,9 +53,9 @@ fun AddCustomerScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = Color(0xFF1A237E),
-                    navigationIconContentColor = Color(0xFF1A237E)
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.primary
                 )
             )
         },
@@ -65,7 +65,7 @@ fun AddCustomerScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color(0xFFF5F7FA))
+                .background(MaterialTheme.colorScheme.background)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -131,18 +131,19 @@ fun AddCustomerScreen(
                 },
                 enabled = !isSaving,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A237E))
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 if (isSaving) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary, // FIXED: High visibility
+                        strokeWidth = 2.dp
+                    )
                 } else {
-                    Text("Save Customer", fontSize = 18.sp)
+                    Text("Save Customer", fontSize = 18.sp, color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
             Spacer(modifier = Modifier.navigationBarsPadding())
         }
     }
 }
-
-@Composable
-fun rememberCoroutineOfScope() = rememberCoroutineScope()

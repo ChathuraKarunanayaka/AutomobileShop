@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.garageapp.domain.model.Vehicle
 import com.example.garageapp.domain.usecase.AddVehicleUseCase
 import com.example.garageapp.domain.usecase.GetVehiclesUseCase
+import com.example.garageapp.domain.usecase.GetVehiclesByCustomerUseCase
 import com.example.garageapp.domain.usecase.SearchVehiclesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -19,6 +20,7 @@ import javax.inject.Inject
 @HiltViewModel
 class VehicleListViewModel @Inject constructor(
     private val getVehiclesUseCase: GetVehiclesUseCase,
+    private val getVehiclesByCustomerUseCase: GetVehiclesByCustomerUseCase,
     private val searchVehiclesUseCase: SearchVehiclesUseCase
 ) : ViewModel() {
     private val _vehicles = MutableStateFlow<List<Vehicle>>(emptyList())
@@ -27,20 +29,15 @@ class VehicleListViewModel @Inject constructor(
     private var searchJob: Job? = null
     private var isSearching = false
 
-    init {
-        loadAllVehicles()
-    }
-
-    private fun loadAllVehicles() {
+    fun loadVehiclesForCustomer(customerId: String) {
         isSearching = false
-        getVehiclesUseCase().onEach { 
+        getVehiclesByCustomerUseCase(customerId).onEach { 
             if (!isSearching) _vehicles.value = it 
         }.launchIn(viewModelScope)
     }
 
     fun searchVehicles(query: String) {
         if (query.isBlank()) {
-            loadAllVehicles()
             return
         }
 

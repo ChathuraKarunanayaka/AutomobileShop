@@ -52,12 +52,12 @@ fun JobCardItem.toEntity() = JobCardItemEntity(
 
 fun InvoiceEntity.toDomain() = Invoice(
     invoiceId, shopId, invoiceNumber, jobCardId, customerId, vehicleId, customerName, customerPhone, vehicleNumber,
-    subtotal, discount, totalAmount, paidAmount, balanceAmount, PaymentStatus.valueOf(paymentStatus.name), createdAt, updatedAt
+    subtotal, totalCost, totalProfit, discount, totalAmount, paidAmount, balanceAmount, PaymentStatus.valueOf(paymentStatus.name), createdAt, updatedAt
 )
 
 fun Invoice.toEntity() = InvoiceEntity(
     invoiceId, shopId, invoiceNumber, jobCardId, customerId, vehicleId, customerName, customerPhone, vehicleNumber,
-    subtotal, discount, totalAmount, paidAmount, balanceAmount, PaymentStatusEntity.valueOf(paymentStatus.name), createdAt, updatedAt
+    subtotal, totalCost, totalProfit, discount, totalAmount, paidAmount, balanceAmount, PaymentStatusEntity.valueOf(paymentStatus.name), createdAt, updatedAt
 )
 
 fun PaymentEntity.toDomain() = Payment(
@@ -82,4 +82,12 @@ fun CounterEntity.toDomain() = Counter(
 
 fun Counter.toEntity() = CounterEntity(
     counterId, shopId, jobCardNextNumber, invoiceNextNumber
+)
+
+fun WorkshopDetailsEntity.toDomain() = WorkshopDetails(
+    shopId, name, address, phoneNumber, email, logoUrl, footerNote, updatedAt
+)
+
+fun WorkshopDetails.toEntity() = WorkshopDetailsEntity(
+    shopId, name, address, phoneNumber, email, logoUrl, footerNote, updatedAt
 )
