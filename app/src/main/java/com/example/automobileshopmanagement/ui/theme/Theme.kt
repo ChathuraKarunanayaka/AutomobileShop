@@ -3,8 +3,6 @@ package com.example.automobileshopmanagement.ui.theme
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -14,44 +12,32 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF9FA8DA),
-    secondary = Color(0xFF3949AB),
-    tertiary = Color(0xFF81D4FA),
-    background = Color(0xFF121212),
-    surface = Color(0xFF1E1E1E),
-    onPrimary = Color.Black,
-    onSecondary = Color.White,
-    onBackground = Color.White,
-    onSurface = Color.White
-)
-
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF1A237E),
-    secondary = Color(0xFF3949AB),
-    tertiary = Color(0xFF03A9F4),
-    background = Color(0xFFF5F7FA),
-    surface = Color.White,
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onBackground = Color.Black,
-    onSurface = Color(0xFF1A237E)
+    primary = PrimaryBlue,
+    onPrimary = SurfaceWhite,
+    primaryContainer = LightBlue,
+    onPrimaryContainer = PrimaryBlue,
+    secondary = SecondaryBlue,
+    onSecondary = SurfaceWhite,
+    tertiary = AccentCyan,
+    onTertiary = SurfaceWhite,
+    background = BackgroundGray,
+    onBackground = TextPrimary,
+    surface = SurfaceWhite,
+    onSurface = TextPrimary,
+    error = ErrorRed,
+    onError = SurfaceWhite,
+    outline = DividerGray
 )
 
 @Composable
 fun AutoMobileShopManagementTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false, // Forced to light theme as requested
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    // We ignore darkTheme and dynamicColor for now as requested
+    val colorScheme = LightColorScheme
 
     val view = LocalView.current
     val context = LocalContext.current
@@ -59,11 +45,11 @@ fun AutoMobileShopManagementTheme(
         SideEffect {
             val window = (context.findActivity())?.window
             if (window != null) {
-                window.statusBarColor = Color.Transparent.toArgb()
-                window.navigationBarColor = Color.Transparent.toArgb()
+                window.statusBarColor = colorScheme.primary.toArgb()
+                window.navigationBarColor = colorScheme.background.toArgb()
                 val insetsController = WindowCompat.getInsetsController(window, view)
-                insetsController.isAppearanceLightStatusBars = !darkTheme
-                insetsController.isAppearanceLightNavigationBars = !darkTheme
+                insetsController.isAppearanceLightStatusBars = false // White icons on Blue status bar
+                insetsController.isAppearanceLightNavigationBars = true // Dark icons on Gray nav bar
             }
         }
     }

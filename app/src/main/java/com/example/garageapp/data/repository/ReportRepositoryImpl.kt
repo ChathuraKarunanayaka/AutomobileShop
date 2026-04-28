@@ -1,5 +1,8 @@
 package com.example.garageapp.data.repository
 
+import com.example.garageapp.data.mapper.toDomain
+import com.example.garageapp.data.model.InvoiceEntity
+import com.example.garageapp.data.model.JobCardItemEntity
 import com.example.garageapp.domain.model.*
 import com.example.garageapp.domain.repository.ReportRepository
 import com.google.firebase.firestore.FirebaseFirestore
@@ -19,14 +22,28 @@ class ReportRepositoryImpl @Inject constructor(
         firestore.collection("shops").document(shopId).collection("reports_daily")
 
     override fun getDailyStats(date: Long): Flow<DailyStats?> = callbackFlow {
-        val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(date))
-        // Assuming we have shopId from current user context, for MVP using "demo_shop"
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = date
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val normalizedDate = calendar.timeInMillis
+        
+        val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(normalizedDate))
         val shopId = "demo_shop" 
         
         val listener = getDailyStatsCollection(shopId).document(dateStr)
             .addSnapshotListener { snapshot, _ ->
-                snapshot?.let {
-                    trySend(it.toObject(DailyStats::class.java))
+                if (snapshot != null && snapshot.exists()) {
+                    try {
+                        val stats = snapshot.toObject(DailyStats::class.java)
+                        trySend(stats)
+                    } catch (e: Exception) {
+                        trySend(DailyStats(date = normalizedDate))
+                    }
+                } else {
+                    trySend(null)
                 }
             }
         awaitClose { listener.remove() }
@@ -34,15 +51,18 @@ class ReportRepositoryImpl @Inject constructor(
 
     override fun getStatsForPeriod(startDate: Long, endDate: Long): Flow<List<DailyStats>> = callbackFlow {
         val shopId = "demo_shop"
-        val startStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(startDate))
-        val endStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(endDate))
         
         val listener = getDailyStatsCollection(shopId)
             .whereGreaterThanOrEqualTo("date", startDate)
             .whereLessThanOrEqualTo("date", endDate)
             .addSnapshotListener { snapshot, _ ->
-                snapshot?.let {
-                    trySend(it.toObjects(DailyStats::class.java).sortedBy { it.date })
+                if (snapshot != null) {
+                    try {
+                        val stats = snapshot.toObjects(DailyStats::class.java).sortedBy { it.date }
+                        trySend(stats)
+                    } catch (e: Exception) {
+                        trySend(emptyList())
+                    }
                 }
             }
         awaitClose { listener.remove() }
@@ -61,49 +81,68 @@ class ReportRepositoryImpl @Inject constructor(
         calendar.add(Calendar.DAY_OF_YEAR, 1)
         val endOfDay = calendar.timeInMillis
 
-        // 1. Fetch all invoices for this day
-        val invoices = firestore.collection("shops").document(shopId).collection("invoices")
-            .whereGreaterThanOrEqualTo("createdAt", startOfDay)
-            .whereLessThanOrEqualTo("createdAt", endOfDay)
-            .get().await().toObjects(Invoice::class.java)
+        try {
+            val invoices = firestore.collection("invoices")
+                .whereEqualTo("shopId", shopId)
+                .whereGreaterThanOrEqualTo("createdAt", startOfDay)
+                .whereLessThanOrEqualTo("createdAt", endOfDay)
+                .get().await().toObjects(InvoiceEntity::class.java)
+                .mapNotNull { entity ->
+                    try { entity.toDomain() } catch (e: Exception) { null }
+                }
 
-        // 2. Calculate totals
-        var totalSales = 0.0
-        var totalPaid = 0.0
-        var totalBalance = 0.0
-        
-        invoices.forEach {
-            totalSales += it.totalAmount
-            totalPaid += it.paidAmount
-            totalBalance += it.balanceAmount
-        }
-
-        // 3. Fetch JobCard items for profit calculation (simplified for MVP)
-        // In a real app, you might want to pre-calculate profit when invoice is created
-        var totalProfit = 0.0
-        for (invoice in invoices) {
-            val items = firestore.collection("shops").document(shopId).collection("jobCards")
-                .document(invoice.jobCardId).collection("items")
-                .get().await().toObjects(JobCardItem::class.java)
+            var totalSales = 0.0
+            var totalPaid = 0.0
+            var totalBalance = 0.0
+            var totalProfit = 0.0
+            var totalCost = 0.0
+            var laborCharges = 0.0
+            var sparePartsCost = 0.0
+            var outsidePurchases = 0.0
             
-            val invoiceProfit = items.sumOf { it.profit } - invoice.discount
-            totalProfit += invoiceProfit
+            for (invoice in invoices) {
+                totalSales += invoice.totalAmount
+                totalPaid += invoice.paidAmount
+                totalBalance += invoice.balanceAmount
+                
+                val items = firestore.collection("jobCardItems")
+                    .whereEqualTo("jobCardId", invoice.jobCardId)
+                    .get().await().toObjects(JobCardItemEntity::class.java)
+                    .mapNotNull { entity ->
+                        try { entity.toDomain() } catch (e: Exception) { null }
+                    }
+                
+                items.forEach { item ->
+                    when (item.itemType) {
+                        JobCardItemType.LABOUR -> laborCharges += item.totalSellingPrice
+                        JobCardItemType.SPARE_PART -> sparePartsCost += item.totalSellingPrice
+                        JobCardItemType.OUTSIDE_PURCHASE -> outsidePurchases += item.totalSellingPrice
+                        else -> {}
+                    }
+                    totalCost += item.totalCost
+                    totalProfit += item.profit
+                }
+                totalProfit -= invoice.discount
+            }
+
+            val dailyStats = DailyStats(
+                date = startOfDay,
+                totalSales = totalSales,
+                totalCost = totalCost,
+                totalProfit = totalProfit,
+                totalPaid = totalPaid,
+                pendingBalance = totalBalance,
+                invoiceCount = invoices.size.toLong(),
+                completedJobCards = invoices.size.toLong(),
+                laborCharges = laborCharges,
+                sparePartsCost = sparePartsCost,
+                outsidePurchases = outsidePurchases
+            )
+
+            val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(date))
+            getDailyStatsCollection(shopId).document(dateStr).set(dailyStats).await()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-
-        val completedJobs = invoices.size // Simplified: one invoice per completed job
-
-        val dailyStats = DailyStats(
-            date = startOfDay,
-            totalSales = totalSales,
-            totalCost = totalSales - totalProfit,
-            totalProfit = totalProfit,
-            totalPaid = totalPaid,
-            pendingBalance = totalBalance,
-            invoiceCount = invoices.size,
-            completedJobCards = completedJobs
-        )
-
-        val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(date))
-        getDailyStatsCollection(shopId).document(dateStr).set(dailyStats).await()
     }
 }

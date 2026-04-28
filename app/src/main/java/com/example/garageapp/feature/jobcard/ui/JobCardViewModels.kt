@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.garageapp.domain.model.JobCard
 import com.example.garageapp.domain.model.JobCardStatus
 import com.example.garageapp.domain.usecase.AddJobCardUseCase
-import com.example.garageapp.domain.usecase.GenerateJobCardNumberUseCase
 import com.example.garageapp.domain.usecase.GetJobCardsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,20 +30,10 @@ class JobCardListViewModel @Inject constructor(
 
 @HiltViewModel
 class CreateJobCardViewModel @Inject constructor(
-    private val addJobCardUseCase: AddJobCardUseCase,
-    private val generateJobCardNumberUseCase: GenerateJobCardNumberUseCase
+    private val addJobCardUseCase: AddJobCardUseCase
 ) : ViewModel() {
     private val _isSaving = MutableStateFlow(false)
     val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
-
-    private val _generatedNumber = MutableStateFlow("")
-    val generatedNumber: StateFlow<String> = _generatedNumber.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            _generatedNumber.value = generateJobCardNumberUseCase()
-        }
-    }
 
     fun createJobCard(
         customerId: String,
@@ -63,7 +52,7 @@ class CreateJobCardViewModel @Inject constructor(
             try {
                 val jobCard = JobCard(
                     jobCardId = UUID.randomUUID().toString(),
-                    jobCardNumber = _generatedNumber.value,
+                    jobCardNumber = "", // Will be generated in UseCase/Repository
                     customerId = customerId,
                     vehicleId = vehicleId,
                     customerName = customerName,

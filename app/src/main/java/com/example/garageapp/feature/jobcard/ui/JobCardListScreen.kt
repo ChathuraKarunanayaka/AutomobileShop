@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -47,47 +46,65 @@ fun JobCardListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Job Cards") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
+            Column(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.primary)
+                    .statusBarsPadding()
+            ) {
+                TopAppBar(
+                    title = { Text("Service Job Cards", fontWeight = FontWeight.Bold, color = Color.White) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary)
+                )
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    placeholder = { Text("Search Job No, Name or Vehicle...", color = Color.White.copy(alpha = 0.6f)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.White) },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = Color.White,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
+                        cursorColor = Color.White
+                    )
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
         }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color(0xFFF5F7FA))
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                placeholder = { Text("Search by No, Name or Vehicle") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                shape = MaterialTheme.shapes.medium,
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = Color.White,
-                    focusedContainerColor = Color.White
+            if (filteredJobCards.isEmpty()) {
+                Text(
+                    text = "No job cards found matching your search",
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Color.Gray
                 )
-            )
-
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(filteredJobCards) { jobCard ->
-                    JobCardItem(
-                        jobCard = jobCard,
-                        onClick = { onJobCardClick(jobCard.jobCardId) }
-                    )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(filteredJobCards) { jobCard ->
+                        JobCardListItem(
+                            jobCard = jobCard,
+                            onClick = { onJobCardClick(jobCard.jobCardId) }
+                        )
+                    }
                 }
             }
         }
@@ -95,14 +112,13 @@ fun JobCardListScreen(
 }
 
 @Composable
-fun JobCardItem(jobCard: JobCard, onClick: () -> Unit) {
+fun JobCardListItem(jobCard: JobCard, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(2.dp)
+        elevation = CardDefaults.cardElevation(3.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -112,22 +128,31 @@ fun JobCardItem(jobCard: JobCard, onClick: () -> Unit) {
             ) {
                 Text(
                     text = jobCard.jobCardNumber,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.primary
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 17.sp,
+                    color = Color(0xFF1A237E)
                 )
                 JobCardStatusChip(status = jobCard.status)
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
-            Text(text = jobCard.vehicleNumber, fontWeight = FontWeight.Medium, fontSize = 15.sp)
-            Text(text = jobCard.customerName, fontSize = 14.sp, color = Color.Gray)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = jobCard.vehicleNumber, 
+                    fontWeight = FontWeight.Bold, 
+                    fontSize = 15.sp, 
+                    color = Color(0xFF212121),
+                    modifier = Modifier.background(Color(0xFFF5F5F5), MaterialTheme.shapes.extraSmall).padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(text = jobCard.customerName, fontSize = 14.sp, color = Color(0xFF616161))
+            }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFFF5F5F5))
             
             val date = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(Date(jobCard.createdAt))
-            Text(text = "Created: $date", fontSize = 12.sp, color = Color.Gray)
+            Text(text = "Registration Date: $date", fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Medium)
         }
     }
 }
@@ -135,23 +160,23 @@ fun JobCardItem(jobCard: JobCard, onClick: () -> Unit) {
 @Composable
 fun JobCardStatusChip(status: JobCardStatus) {
     val color = when (status) {
-        JobCardStatus.OPEN -> Color(0xFF2196F3)
-        JobCardStatus.IN_PROGRESS -> Color(0xFFFFA000)
-        JobCardStatus.READY_FOR_DELIVERY -> Color(0xFF4CAF50)
-        JobCardStatus.COMPLETED -> Color(0xFF757575)
-        JobCardStatus.CANCELLED -> Color(0xFFF44336)
+        JobCardStatus.OPEN -> Color(0xFF1976D2)
+        JobCardStatus.IN_PROGRESS -> Color(0xFFF57C00)
+        JobCardStatus.READY_FOR_DELIVERY -> Color(0xFF388E3C)
+        JobCardStatus.COMPLETED -> Color(0xFF455A64)
+        JobCardStatus.CANCELLED -> Color(0xFFD32F2F)
     }
     
     Surface(
-        color = color.copy(alpha = 0.1f),
+        color = color.copy(alpha = 0.08f),
         shape = MaterialTheme.shapes.small,
-        border = androidx.compose.foundation.BorderStroke(1.dp, color)
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, color)
     ) {
         Text(
-            text = status.name,
+            text = status.name.replace("_", " "),
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Black,
             color = color
         )
     }

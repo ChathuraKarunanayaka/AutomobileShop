@@ -6,7 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,7 +33,7 @@ fun VehicleSearchScreen(
         topBar = {
             Column(modifier = Modifier.background(MaterialTheme.colorScheme.primary).statusBarsPadding()) {
                 TopAppBar(
-                    title = { Text("Search Vehicles", color = Color.White) },
+                    title = { Text("Search Vehicles", fontWeight = FontWeight.Bold, color = Color.White) },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
@@ -50,18 +50,18 @@ fun VehicleSearchScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-                    placeholder = { Text("Enter Vehicle Number...", color = Color.LightGray) },
+                    placeholder = { Text("Enter Vehicle Number...", color = Color.White.copy(alpha = 0.6f)) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.White) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
                         focusedBorderColor = Color.White,
-                        unfocusedBorderColor = Color.LightGray,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
                         cursorColor = Color.White
                     )
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
         }
     ) { paddingValues ->
@@ -72,17 +72,39 @@ fun VehicleSearchScreen(
                 .background(MaterialTheme.colorScheme.background)
         ) {
             if (searchQuery.isBlank()) {
-                Text(
-                    "Enter a vehicle number to search",
+                Column(
                     modifier = Modifier.align(Alignment.Center),
-                    color = Color.Gray
-                )
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = Color.LightGray
+                    )
+                    Text(
+                        "Enter a vehicle number to search",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             } else if (vehicles.isEmpty()) {
-                Text(
-                    "No vehicles found matching '$searchQuery'",
+                Column(
                     modifier = Modifier.align(Alignment.Center),
-                    color = Color.Gray
-                )
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "No vehicles found matching",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        "'$searchQuery'",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -96,6 +118,59 @@ fun VehicleSearchScreen(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun VehicleItem(vehicle: Vehicle, onStartJobCard: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.DirectionsCar, 
+                            contentDescription = null, 
+                            tint = MaterialTheme.colorScheme.primary, 
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = vehicle.vehicleNumber, 
+                        style = MaterialTheme.typography.titleLarge, 
+                        fontWeight = FontWeight.ExtraBold, 
+                        color = Color(0xFF1A237E)
+                    )
+                    Text(
+                        text = vehicle.model, 
+                        style = MaterialTheme.typography.bodyMedium, 
+                        color = Color(0xFF424242)
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Button(
+                onClick = onStartJobCard,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Text("PROCEED WITH JOB CARD", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             }
         }
     }

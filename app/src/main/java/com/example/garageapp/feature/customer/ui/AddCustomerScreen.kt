@@ -2,39 +2,54 @@ package com.example.garageapp.feature.customer.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.garageapp.domain.model.Customer
-import kotlinx.coroutines.launch
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddCustomerScreen(
+    customerId: String? = null,
     onBack: () -> Unit,
+    onSuccess: () -> Unit,
     viewModel: AddCustomerViewModel = hiltViewModel()
 ) {
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
     
+    val isEdit = customerId != null
+    val customer by viewModel.customer.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(customerId) {
+        if (isEdit) {
+            viewModel.loadCustomer(customerId!!)
+        }
+    }
+
+    LaunchedEffect(customer) {
+        customer?.let {
+            name = it.name
+            phone = it.phoneNumber
+            address = it.address
+        }
+    }
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = MaterialTheme.colorScheme.onBackground,
-        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+        focusedTextColor = Color(0xFF212121),
+        unfocusedTextColor = Color(0xFF212121),
         focusedLabelColor = MaterialTheme.colorScheme.primary,
         unfocusedLabelColor = Color.Gray,
         focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -43,107 +58,95 @@ fun AddCustomerScreen(
     )
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("New Customer") },
+                title = { Text(if (isEdit) "Update Profile" else "New Customer", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.primary
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
                 )
             )
-        },
-        modifier = Modifier.fillMaxSize()
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(rememberScrollState())
                 .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Text(
+                text = "Personal Information",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Full Name") },
+                label = { Text("Customer Name") },
+                modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                colors = textFieldColors,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
-                modifier = Modifier.fillMaxWidth()
+                colors = textFieldColors
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            
             OutlinedTextField(
                 value = phone,
                 onValueChange = { phone = it },
-                label = { Text("Phone Number") },
+                label = { Text("Contact Number") },
+                modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                colors = textFieldColors,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
-                modifier = Modifier.fillMaxWidth()
+                colors = textFieldColors
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            
             OutlinedTextField(
                 value = address,
                 onValueChange = { address = it },
-                label = { Text("Address") },
-                colors = textFieldColors,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Done),
+                label = { Text("Residence Address") },
                 modifier = Modifier.fillMaxWidth(),
-                minLines = 3
+                minLines = 3,
+                colors = textFieldColors
             )
             
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(32.dp))
             
             Button(
                 onClick = {
-                    if (name.isBlank() || phone.isBlank()) {
-                        scope.launch { snackbarHostState.showSnackbar("Name and phone are required") }
-                    } else {
-                        viewModel.addCustomer(
-                            Customer(
-                                customerId = java.util.UUID.randomUUID().toString(),
-                                name = name,
-                                phoneNumber = phone,
-                                address = address,
-                                createdAt = System.currentTimeMillis(),
-                                updatedAt = System.currentTimeMillis()
-                            ),
-                            onSuccess = {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar("Customer saved successfully")
-                                    onBack()
-                                }
-                            },
-                            onError = { errorMsg ->
-                                scope.launch { snackbarHostState.showSnackbar("Error: $errorMsg") }
-                            }
-                        )
-                    }
+                    val newCustomer = Customer(
+                        customerId = customerId ?: UUID.randomUUID().toString(),
+                        name = name,
+                        phoneNumber = phone,
+                        address = address,
+                        createdAt = customer?.createdAt ?: System.currentTimeMillis(),
+                        updatedAt = System.currentTimeMillis()
+                    )
+                    viewModel.saveCustomer(newCustomer, isEdit, onSuccess, { /* Show error */ })
                 },
-                enabled = !isSaving,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                enabled = name.isNotBlank() && phone.isNotBlank() && !isSaving,
+                shape = MaterialTheme.shapes.medium
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary, // FIXED: High visibility
+                        color = Color.White,
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Save Customer", fontSize = 18.sp, color = MaterialTheme.colorScheme.onPrimary)
+                    Text(
+                        text = if (isEdit) "UPDATE CUSTOMER" else "SAVE CUSTOMER",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
-            Spacer(modifier = Modifier.navigationBarsPadding())
         }
     }
 }

@@ -107,4 +107,17 @@ class JobCardDetailsViewModel @Inject constructor(
             _jobCard.value = updated
         }
     }
+
+    fun updateJobCardDetails(complaint: String, notes: String) {
+        val current = _jobCard.value ?: return
+        viewModelScope.launch {
+            val updated = current.copy(
+                complaintDescription = complaint,
+                inspectionNotes = notes,
+                updatedAt = System.currentTimeMillis()
+            )
+            updateJobCardUseCase(updated)
+            _jobCard.value = updated
+        }
+    }
 }

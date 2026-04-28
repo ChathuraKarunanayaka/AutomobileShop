@@ -7,8 +7,11 @@ data class DailyStats(
     val totalProfit: Double = 0.0,
     val totalPaid: Double = 0.0,
     val pendingBalance: Double = 0.0,
-    val invoiceCount: Int = 0,
-    val completedJobCards: Int = 0
+    val invoiceCount: Long = 0L,
+    val completedJobCards: Long = 0L,
+    val laborCharges: Double = 0.0,
+    val sparePartsCost: Double = 0.0,
+    val outsidePurchases: Double = 0.0
 )
 
 data class DashboardStats(

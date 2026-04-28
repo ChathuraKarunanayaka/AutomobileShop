@@ -8,9 +8,7 @@ import com.example.garageapp.domain.repository.CounterRepository
 import com.example.garageapp.domain.repository.InvoiceRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.UUID
 
 class GetInvoicesUseCase @Inject constructor(
     private val repository: InvoiceRepository
@@ -34,17 +32,8 @@ class CreateInvoiceUseCase @Inject constructor(
         discount: Double = 0.0,
         paidAmount: Double = 0.0
     ): Invoice {
-        val shopId = jobCard.shopId.ifEmpty { "default" }
-        val counter = counterRepository.getCounter(shopId)
-        val nextNum = (counter?.invoiceNextNumber ?: 1)
-        
-        val dateStr = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
-        val vehicleSuffix = if (jobCard.vehicleNumber.length >= 4) {
-            jobCard.vehicleNumber.takeLast(4)
-        } else {
-            jobCard.vehicleNumber
-        }
-        val invoiceNumber = "INV-$vehicleSuffix-$dateStr-${String.format("%03d", nextNum)}"
+        val shopId = if (jobCard.shopId.isEmpty()) "demo_shop" else jobCard.shopId
+        val invoiceNumber = counterRepository.getNextInvoiceNumber(shopId, jobCard.vehicleNumber)
         
         val subtotal = items.sumOf { it.totalSellingPrice }
         val totalCost = items.sumOf { it.totalCost }
@@ -60,7 +49,7 @@ class CreateInvoiceUseCase @Inject constructor(
         }
 
         val invoice = Invoice(
-            invoiceId = java.util.UUID.randomUUID().toString(),
+            invoiceId = UUID.randomUUID().toString(),
             shopId = shopId,
             invoiceNumber = invoiceNumber,
             jobCardId = jobCard.jobCardId,
@@ -82,14 +71,6 @@ class CreateInvoiceUseCase @Inject constructor(
         )
 
         repository.addInvoice(invoice)
-        
-        // Update counter
-        counterRepository.updateCounter(
-            (counter ?: com.example.garageapp.domain.model.Counter(shopId = shopId)).copy(
-                invoiceNextNumber = nextNum + 1
-            )
-        )
-        
         return invoice
     }
 }

@@ -36,7 +36,6 @@ fun CreateJobCardScreen(
     var notes by remember { mutableStateOf("") }
     
     val isSaving by viewModel.isSaving.collectAsState()
-    val jobCardNumber by viewModel.generatedNumber.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -57,7 +56,7 @@ fun CreateJobCardScreen(
                 title = { 
                     Column {
                         Text("Create Job Card", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text(jobCardNumber.ifBlank { "Generating..." }, fontSize = 12.sp, color = Color.Gray)
+                        Text("New Entry", fontSize = 12.sp, color = Color.Gray)
                     }
                 },
                 navigationIcon = {
@@ -171,7 +170,7 @@ fun CreateJobCardScreen(
                 if (isSaving) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
-                        color = Color.White, // High contrast
+                        color = Color.White,
                         strokeWidth = 2.dp
                     )
                 } else {

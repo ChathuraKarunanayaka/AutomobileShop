@@ -32,26 +32,9 @@ class AddJobCardUseCase @Inject constructor(
     private val counterRepository: CounterRepository
 ) {
     suspend operator fun invoke(jobCard: JobCard) {
-        repository.addJobCard(jobCard)
-    }
-}
-
-class GenerateJobCardNumberUseCase @Inject constructor(
-    private val counterRepository: CounterRepository
-) {
-    suspend operator fun invoke(shopId: String = "default"): String {
-        val counter = counterRepository.getCounter(shopId)
-        val nextNum = (counter?.jobCardNextNumber ?: 1)
-        val dateStr = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
-        val formattedNum = String.format("%03d", nextNum)
-        
-        // Increment counter
-        counterRepository.updateCounter(
-            (counter ?: com.example.garageapp.domain.model.Counter(shopId = shopId)).copy(
-                jobCardNextNumber = nextNum + 1
-            )
-        )
-        
-        return "JC-$dateStr-$formattedNum"
+        val shopId = if (jobCard.shopId.isEmpty()) "demo_shop" else jobCard.shopId
+        val autoNumber = counterRepository.getNextJobCardNumber(shopId)
+        val jobCardWithNumber = jobCard.copy(jobCardNumber = autoNumber, shopId = shopId)
+        repository.addJobCard(jobCardWithNumber)
     }
 }

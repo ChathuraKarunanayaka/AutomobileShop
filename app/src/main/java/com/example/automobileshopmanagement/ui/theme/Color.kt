@@ -2,10 +2,20 @@ package com.example.automobileshopmanagement.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Primary Palette - Deep Professional Blues
+val PrimaryBlue = Color(0xFF1A237E)
+val SecondaryBlue = Color(0xFF303F9F)
+val LightBlue = Color(0xFFC5CAE9)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Accent Colors
+val AccentCyan = Color(0xFF00BCD4)
+val SuccessGreen = Color(0xFF43A047)
+val ErrorRed = Color(0xFFD32F2F)
+val WarningOrange = Color(0xFFFFA000)
+
+// Neutral Palette
+val BackgroundGray = Color(0xFFF8F9FA)
+val SurfaceWhite = Color(0xFFFFFFFF)
+val TextPrimary = Color(0xFF212121)
+val TextSecondary = Color(0xFF757575)
+val DividerGray = Color(0xFFEEEEEE)

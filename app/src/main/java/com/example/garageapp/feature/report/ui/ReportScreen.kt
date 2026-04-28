@@ -77,16 +77,29 @@ fun ReportScreen(
 
             dailyStats?.let { stats ->
                 ReportSummaryGrid(stats)
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Text(
+                    text = "Income Breakdown",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                BreakdownCard(stats)
+
             } ?: run {
                 if (!isLoading) {
-                    Text("No data available for this date.", modifier = Modifier.padding(16.dp))
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        Text("No data available for this date.", color = Color.Gray)
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "Profit Trend (Last 7 Days)",
+                text = "Profit Trend (Last 30 Days)",
                 style = MaterialTheme.typography.titleMedium,
                 color = Color.Gray,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -94,11 +107,11 @@ fun ReportScreen(
             
             Card(
                 modifier = Modifier.fillMaxWidth().height(250.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(2.dp)
             ) {
                 Box(modifier = Modifier.padding(16.dp)) {
-                    // Simple Chart Placeholder/Implementation
-                    ProfitChart(stats = periodStats.takeLast(7))
+                    ProfitChart(stats = periodStats)
                 }
             }
             
@@ -118,10 +131,31 @@ fun ReportSummaryGrid(stats: DailyStats) {
             ReportCard("Payments Rec.", "Rs. ${stats.totalPaid.toInt()}", Color(0xFFFB8C00), Modifier.weight(1f))
             ReportCard("Pending", "Rs. ${stats.pendingBalance.toInt()}", Color(0xFFD32F2F), Modifier.weight(1f))
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            ReportCard("Invoices", stats.invoiceCount.toString(), Color(0xFF455A64), Modifier.weight(1f))
-            ReportCard("Job Cards", stats.completedJobCards.toString(), Color(0xFF455A64), Modifier.weight(1f))
+    }
+}
+
+@Composable
+fun BreakdownCard(stats: DailyStats) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            BreakdownRow("Labor Charges", "Rs. ${stats.laborCharges.toInt()}", Color(0xFF3949AB))
+            BreakdownRow("Spare Parts", "Rs. ${stats.sparePartsCost.toInt()}", Color(0xFF43A047))
+            BreakdownRow("Outside Purchases", "Rs. ${stats.outsidePurchases.toInt()}", Color(0xFFFB8C00))
+            Divider()
+            BreakdownRow("Total Sales", "Rs. ${stats.totalSales.toInt()}", Color.Black, isBold = true)
         }
+    }
+}
+
+@Composable
+fun BreakdownRow(label: String, value: String, color: Color, isBold: Boolean = false) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, fontSize = 14.sp, fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal)
+        Text(value, fontSize = 14.sp, fontWeight = if (isBold) FontWeight.Bold else FontWeight.Medium, color = color)
     }
 }
 
@@ -141,24 +175,27 @@ fun ReportCard(title: String, value: String, color: Color, modifier: Modifier = 
 
 @Composable
 fun ProfitChart(stats: List<DailyStats>) {
-    if (stats.isEmpty()) {
+    if (stats.size < 2) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Insufficient data for chart", color = Color.Gray)
+            Text("Need more data for chart...", color = Color.Gray, fontSize = 12.sp)
         }
         return
     }
 
     val maxProfit = stats.maxOfOrNull { it.totalProfit }?.coerceAtLeast(100.0) ?: 100.0
+    val minProfit = stats.minOfOrNull { it.totalProfit }?.coerceAtMost(0.0) ?: 0.0
+    val range = (maxProfit - minProfit).coerceAtLeast(1.0)
     
     Canvas(modifier = Modifier.fillMaxSize()) {
         val width = size.width
         val height = size.height
-        val spacing = width / (stats.size.coerceAtLeast(2) - 1).coerceAtLeast(1)
+        val spacing = width / (stats.size - 1)
         
         val path = Path()
         stats.forEachIndexed { index, dailyStats ->
             val x = index * spacing
-            val y = height - (dailyStats.totalProfit.toFloat() / maxProfit.toFloat() * height)
+            val normalizedY = (dailyStats.totalProfit - minProfit) / range
+            val y = height - (normalizedY.toFloat() * height)
             
             if (index == 0) {
                 path.moveTo(x, y)
@@ -166,7 +203,11 @@ fun ProfitChart(stats: List<DailyStats>) {
                 path.lineTo(x, y)
             }
             
-            drawCircle(color = Color(0xFF388E3C), radius = 4.dp.toPx(), center = Offset(x, y))
+            drawCircle(
+                color = Color(0xFF388E3C), 
+                radius = 3.dp.toPx(), 
+                center = Offset(x, y)
+            )
         }
         
         drawPath(
@@ -174,5 +215,16 @@ fun ProfitChart(stats: List<DailyStats>) {
             color = Color(0xFF388E3C),
             style = Stroke(width = 2.dp.toPx())
         )
+        
+        // Baseline (Zero profit line if range includes zero)
+        if (minProfit < 0 && maxProfit > 0) {
+            val zeroY = height - ((-minProfit / range).toFloat() * height)
+            drawLine(
+                color = Color.LightGray,
+                start = Offset(0f, zeroY),
+                end = Offset(width, zeroY),
+                strokeWidth = 1.dp.toPx()
+            )
+        }
     }
 }

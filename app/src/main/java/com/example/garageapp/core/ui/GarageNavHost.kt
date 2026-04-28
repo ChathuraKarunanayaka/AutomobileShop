@@ -28,14 +28,16 @@ import com.example.garageapp.feature.invoice.ui.CreateInvoiceScreen
 import com.example.garageapp.feature.invoice.ui.InvoiceListScreen
 import com.example.garageapp.feature.invoice.ui.InvoiceDetailsScreen
 import com.example.garageapp.feature.settings.ui.WorkshopSettingsScreen
-import com.example.garageapp.feature.report.ui.ReportsScreen
+import com.example.garageapp.feature.report.ui.ReportScreen
 import com.example.garageapp.feature.payment.ui.PaymentEntryScreen
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Dashboard : Screen("dashboard")
     object Customers : Screen("customers")
-    object AddCustomer : Screen("add_customer")
+    object AddCustomer : Screen("add_customer?customerId={customerId}") {
+        fun createRoute(customerId: String? = null) = if (customerId != null) "add_customer?customerId=$customerId" else "add_customer"
+    }
     object CustomerVehicles : Screen("customer_vehicles/{customerId}/{customerName}") {
         fun createRoute(customerId: String, customerName: String) = "customer_vehicles/$customerId/$customerName"
     }
@@ -106,7 +108,8 @@ fun GarageNavHost(
         composable(Screen.Customers.route) {
             val viewModel: com.example.garageapp.feature.customer.ui.CustomerListViewModel = hiltViewModel()
             CustomerListScreen(
-                onAddCustomer = { navController.navigate(Screen.AddCustomer.route) },
+                onAddCustomer = { navController.navigate(Screen.AddCustomer.createRoute()) },
+                onEditCustomer = { customerId -> navController.navigate(Screen.AddCustomer.createRoute(customerId)) },
                 onCustomerClick = { customerId -> 
                     val customer = viewModel.customers.value.find { it.customerId == customerId }
                     customer?.let {
@@ -117,9 +120,15 @@ fun GarageNavHost(
             )
         }
         
-        composable(Screen.AddCustomer.route) {
+        composable(
+            route = Screen.AddCustomer.route,
+            arguments = listOf(navArgument("customerId") { type = NavType.StringType; nullable = true; defaultValue = null })
+        ) { backStackEntry ->
+            val customerId = backStackEntry.arguments?.getString("customerId")
             AddCustomerScreen(
-                onBack = { navController.popBackStack() }
+                customerId = customerId,
+                onBack = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() }
             )
         }
 
@@ -297,7 +306,7 @@ fun GarageNavHost(
         }
 
         composable(Screen.Reports.route) {
-            ReportsScreen(onBack = { navController.popBackStack() })
+            ReportScreen(onBack = { navController.popBackStack() })
         }
     }
 }

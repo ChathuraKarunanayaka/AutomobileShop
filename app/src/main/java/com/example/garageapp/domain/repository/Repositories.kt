@@ -57,6 +57,8 @@ interface UserRepository {
 interface CounterRepository {
     suspend fun getCounter(shopId: String): Counter?
     suspend fun updateCounter(counter: Counter)
+    suspend fun getNextJobCardNumber(shopId: String): String
+    suspend fun getNextInvoiceNumber(shopId: String, vehicleNumber: String): String
 }
 
 interface WorkshopRepository {

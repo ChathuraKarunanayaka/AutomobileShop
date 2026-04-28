@@ -11,10 +11,22 @@ class GetCustomersUseCase @Inject constructor(
     operator fun invoke(): Flow<List<Customer>> = customerRepository.getCustomers()
 }
 
+class GetCustomerByIdUseCase @Inject constructor(
+    private val customerRepository: CustomerRepository
+) {
+    suspend operator fun invoke(id: String): Customer? = customerRepository.getCustomerById(id)
+}
+
 class AddCustomerUseCase @Inject constructor(
     private val customerRepository: CustomerRepository
 ) {
     suspend operator fun invoke(customer: Customer) = customerRepository.addCustomer(customer)
+}
+
+class UpdateCustomerUseCase @Inject constructor(
+    private val customerRepository: CustomerRepository
+) {
+    suspend operator fun invoke(customer: Customer) = customerRepository.updateCustomer(customer)
 }
 
 class SearchCustomersUseCase @Inject constructor(

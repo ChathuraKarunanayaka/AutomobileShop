@@ -7,7 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,8 +40,8 @@ fun VehicleListScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Vehicles", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text(customerName, fontSize = 12.sp, color = Color.Gray)
+                        Text("Vehicles", fontWeight = FontWeight.Bold)
+                        Text(customerName, fontSize = 12.sp, color = Color.White.copy(alpha = 0.8f))
                     }
                 },
                 navigationIcon = {
@@ -50,16 +50,16 @@ fun VehicleListScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = Color(0xFF1A237E),
-                    navigationIconContentColor = Color(0xFF1A237E)
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
                 )
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddVehicle,
-                containerColor = Color(0xFF1A237E),
+                containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Vehicle")
@@ -70,21 +70,25 @@ fun VehicleListScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color(0xFFF5F7FA))
+                .background(MaterialTheme.colorScheme.background)
         ) {
             if (vehicles.isEmpty()) {
                 Column(
                     modifier = Modifier.align(Alignment.Center),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("No vehicles found for this customer", color = Color.Gray)
+                    Icon(
+                        imageVector = Icons.Default.DirectionsCar, 
+                        contentDescription = null, 
+                        modifier = Modifier.size(64.dp), 
+                        tint = Color.LightGray
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = onAddVehicle,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A237E))
-                    ) {
-                        Text("Add First Vehicle", color = Color.White)
-                    }
+                    Text(
+                        text = "No vehicles registered for this customer",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             } else {
                 LazyColumn(
@@ -93,7 +97,7 @@ fun VehicleListScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(vehicles) { vehicle ->
-                        VehicleItem(
+                        VehicleCard(
                             vehicle = vehicle,
                             onStartJobCard = { onStartJobCard(vehicle) }
                         )
@@ -105,53 +109,44 @@ fun VehicleListScreen(
 }
 
 @Composable
-fun VehicleItem(vehicle: Vehicle, onStartJobCard: () -> Unit) {
+fun VehicleCard(vehicle: Vehicle, onStartJobCard: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(2.dp)
+        elevation = CardDefaults.cardElevation(3.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = vehicle.vehicleNumber,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color(0xFF1A237E),
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = vehicle.model,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.DarkGray
-                )
-                if (vehicle.notes.isNotBlank()) {
-                    Text(
-                        text = vehicle.notes,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.DirectionsCar, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(text = vehicle.vehicleNumber, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A237E))
+                    Text(text = vehicle.model, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF424242))
                 }
             }
             
+            if (vehicle.notes.isNotBlank()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(text = vehicle.notes, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
             Button(
                 onClick = onStartJobCard,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF43A047)), // Green for action
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                shape = MaterialTheme.shapes.medium
             ) {
-                Icon(
-                    Icons.Default.Assignment,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = Color.White
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Job Card", color = Color.White, fontSize = 12.sp)
+                Text("CREATE NEW JOB CARD", fontWeight = FontWeight.Bold)
             }
         }
     }

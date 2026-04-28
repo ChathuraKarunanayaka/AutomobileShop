@@ -28,14 +28,30 @@ class ReportViewModel @Inject constructor(
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     init {
-        loadDailyStats(System.currentTimeMillis())
+        val now = System.currentTimeMillis()
+        loadDailyStats(now)
+        
+        // Automatically calculate stats for the last 7 days to populate the chart
+        viewModelScope.launch {
+            val calendar = Calendar.getInstance()
+            for (i in 0..6) {
+                reportRepository.calculateAndStoreDailyStats(calendar.timeInMillis)
+                calendar.add(Calendar.DAY_OF_YEAR, -1)
+            }
+            
+            // After calculating, load the period for display
+            val end = System.currentTimeMillis()
+            calendar.timeInMillis = end
+            calendar.add(Calendar.DAY_OF_YEAR, -30)
+            val start = calendar.timeInMillis
+            loadStatsForPeriod(start, end)
+        }
     }
 
     fun loadDailyStats(date: Long) {
         _selectedDate.value = date
         viewModelScope.launch {
             _isLoading.value = true
-            // Recalculate for today to ensure up-to-date data in MVP
             reportRepository.calculateAndStoreDailyStats(date)
             reportRepository.getDailyStats(date).collect {
                 _dailyStats.value = it
@@ -46,10 +62,8 @@ class ReportViewModel @Inject constructor(
 
     fun loadStatsForPeriod(startDate: Long, endDate: Long) {
         viewModelScope.launch {
-            _isLoading.value = true
             reportRepository.getStatsForPeriod(startDate, endDate).collect {
                 _periodStats.value = it
-                _isLoading.value = false
             }
         }
     }

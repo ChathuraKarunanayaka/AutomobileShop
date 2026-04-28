@@ -35,15 +35,16 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Garage Dashboard", fontWeight = FontWeight.Bold) },
+                title = { Text("GARAGE PRO", fontWeight = FontWeight.ExtraBold, letterSpacing = 2.sp) },
                 actions = {
                     IconButton(onClick = onSettingsClick) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color(0xFF1A237E))
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = Color(0xFF1A237E)
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -52,46 +53,51 @@ fun DashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color(0xFFF5F7FA))
+                .background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             Text(
-                text = "Today's Summary",
+                text = "Operational Overview",
                 style = MaterialTheme.typography.titleMedium,
-                color = Color.Gray,
-                modifier = Modifier.padding(bottom = 12.dp)
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.padding(bottom = 16.dp)
             )
             
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                DashboardStatCard("Open Jobs", stats.openJobs.toString(), Color(0xFF3949AB), Modifier.weight(1f))
-                DashboardStatCard("Completed", stats.completedJobs.toString(), Color(0xFF43A047), Modifier.weight(1f))
+                DashboardStatCard("Active Jobs", stats.openJobs.toString(), MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+                DashboardStatCard("Completed", stats.completedJobs.toString(), Color(0xFF2E7D32), Modifier.weight(1f))
             }
             
             Spacer(modifier = Modifier.height(12.dp))
             
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                DashboardStatCard("Today's Income", "Rs. ${stats.todaysIncome.toInt()}", Color(0xFFFB8C00), Modifier.weight(1f))
-                DashboardStatCard("Pending", "Rs. ${stats.pendingPayments.toInt()}", Color(0xFFD32F2F), Modifier.weight(1f))
+                DashboardStatCard("Today's Rev.", "Rs.${stats.todaysIncome.toInt()}", Color(0xFFE65100), Modifier.weight(1f))
+                DashboardStatCard("Outstanding", "Rs.${stats.pendingPayments.toInt()}", Color(0xFFC62828), Modifier.weight(1f))
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
+            
             Text(
                 text = "Quick Actions",
                 style = MaterialTheme.typography.titleMedium,
-                color = Color.Gray,
-                modifier = Modifier.padding(bottom = 12.dp)
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.padding(bottom = 16.dp)
             )
             
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                QuickActionButton("Manage Customers", Icons.Default.People, Color(0xFF1A237E), onCustomersClick)
-                QuickActionButton("Manage Vehicles", Icons.Default.DirectionsCar, Color(0xFF1A237E), onVehiclesClick)
-                QuickActionButton("Job Cards", Icons.Default.Assignment, Color(0xFF1A237E), onJobCardsClick)
-                QuickActionButton("Invoices", Icons.Default.Receipt, Color(0xFF1A237E), onInvoicesClick)
-                QuickActionButton("Reports & Profit", Icons.Default.BarChart, Color(0xFF455A64), onReportsClick)
-            }
+            ActionGrid(
+                listOf(
+                    ActionItem("Customers", Icons.Default.People, onCustomersClick),
+                    ActionItem("Vehicles", Icons.Default.DirectionsCar, onVehiclesClick),
+                    ActionItem("Job Cards", Icons.Default.Assignment, onJobCardsClick),
+                    ActionItem("Invoices", Icons.Default.Receipt, onInvoicesClick),
+                    ActionItem("Business Reports", Icons.Default.BarChart, onReportsClick)
+                )
+            )
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
@@ -99,37 +105,54 @@ fun DashboardScreen(
 @Composable
 fun DashboardStatCard(title: String, value: String, color: Color, modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier.height(100.dp),
+        modifier = modifier.height(110.dp),
         colors = CardDefaults.cardColors(containerColor = color),
-        elevation = CardDefaults.cardElevation(4.dp)
+        elevation = CardDefaults.cardElevation(6.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(12.dp),
+            modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = value, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            Text(text = title, color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+            Text(text = value, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+            Text(text = title.uppercase(), color = Color.White.copy(alpha = 0.85f), fontSize = 10.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
 
+data class ActionItem(val title: String, val icon: ImageVector, val onClick: () -> Unit)
+
 @Composable
-fun QuickActionButton(text: String, icon: ImageVector, color: Color, onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(60.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = color),
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start
-        ) {
-            Icon(icon, contentDescription = null, tint = Color.White)
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(text, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+fun ActionGrid(items: List<ActionItem>) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        items.forEach { item ->
+            Button(
+                onClick = item.onClick,
+                modifier = Modifier.fillMaxWidth().height(64.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                shape = MaterialTheme.shapes.medium,
+                elevation = ButtonDefaults.buttonElevation(2.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEEEEEE))
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(item.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(item.title, color = Color(0xFF212121), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.weight(1f))
+                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray)
+                }
+            }
         }
     }
 }

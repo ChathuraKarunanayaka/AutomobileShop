@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -27,43 +28,51 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = Color(0xFF1A237E),
-        unfocusedTextColor = Color(0xFF1A237E),
-        focusedLabelColor = Color(0xFF1A237E),
+        focusedTextColor = MaterialTheme.colorScheme.primary,
+        unfocusedTextColor = MaterialTheme.colorScheme.primary,
+        focusedLabelColor = MaterialTheme.colorScheme.primary,
         unfocusedLabelColor = Color.Gray,
-        focusedBorderColor = Color(0xFF1A237E),
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
         unfocusedBorderColor = Color.LightGray
     )
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1A237E))
-            .statusBarsPadding() // Fixed: Content won't hide under the status bar
-            .navigationBarsPadding(), // Fixed: Content won't hide under navigation bar
+            .background(MaterialTheme.colorScheme.primary)
+            .statusBarsPadding()
+            .navigationBarsPadding(),
         contentAlignment = Alignment.Center
     ) {
         Card(
             modifier = Modifier
                 .padding(24.dp)
                 .fillMaxWidth(0.92f),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(8.dp)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(12.dp)
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Garage Management Login",
-                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp),
-                    color = Color(0xFF1A237E)
+                    text = "GARAGE PRO",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.primary,
+                    letterSpacing = 2.sp
                 )
-                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Workshop Management System",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email") },
+                    label = { Text("Email Address") },
                     singleLine = true,
                     colors = textFieldColors,
                     keyboardOptions = KeyboardOptions(
@@ -86,7 +95,19 @@ fun LoginScreen(
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(24.dp))
+                
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 16.dp),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+                
                 Button(
                     onClick = {
                         focusManager.clearFocus()
@@ -95,26 +116,23 @@ fun LoginScreen(
                     enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3949AB))
+                        .height(56.dp),
+                    shape = MaterialTheme.shapes.medium
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp
+                            strokeWidth = 3.dp
                         )
                     } else {
-                        Text("Login", fontSize = 18.sp, color = Color.White)
+                        Text(
+                            "SIGN IN", 
+                            fontSize = 16.sp, 
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
                     }
-                }
-                if (errorMessage != null) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = errorMessage,
-                        color = Color.Red,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
                 }
             }
         }

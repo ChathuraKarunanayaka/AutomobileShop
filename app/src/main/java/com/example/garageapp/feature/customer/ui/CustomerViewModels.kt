@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.garageapp.domain.model.Customer
 import com.example.garageapp.domain.usecase.AddCustomerUseCase
+import com.example.garageapp.domain.usecase.GetCustomerByIdUseCase
 import com.example.garageapp.domain.usecase.GetCustomersUseCase
 import com.example.garageapp.domain.usecase.SearchCustomersUseCase
+import com.example.garageapp.domain.usecase.UpdateCustomerUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,25 +61,38 @@ class CustomerListViewModel @Inject constructor(
 
 @HiltViewModel
 class AddCustomerViewModel @Inject constructor(
-    private val addCustomerUseCase: AddCustomerUseCase
+    private val addCustomerUseCase: AddCustomerUseCase,
+    private val updateCustomerUseCase: UpdateCustomerUseCase,
+    private val getCustomerByIdUseCase: GetCustomerByIdUseCase
 ) : ViewModel() {
     private val _isSaving = MutableStateFlow(false)
     val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
 
-    fun addCustomer(customer: Customer, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    private val _customer = MutableStateFlow<Customer?>(null)
+    val customer: StateFlow<Customer?> = _customer.asStateFlow()
+
+    fun loadCustomer(id: String) {
+        viewModelScope.launch {
+            _customer.value = getCustomerByIdUseCase(id)
+        }
+    }
+
+    fun saveCustomer(customer: Customer, isEdit: Boolean, onSuccess: () -> Unit, onError: (String) -> Unit) {
         if (_isSaving.value) return
         
         _isSaving.value = true
         viewModelScope.launch {
             try {
-                // The usecase calls repository which calls .set().await()
-                // If it succeeds, it means it reached Firestore (or at least local cache with pending sync)
-                addCustomerUseCase(customer)
+                if (isEdit) {
+                    updateCustomerUseCase(customer)
+                } else {
+                    addCustomerUseCase(customer)
+                }
                 _isSaving.value = false
                 onSuccess()
             } catch (e: Exception) {
                 _isSaving.value = false
-                onError(e.localizedMessage ?: "Failed to save customer. Please check your connection.")
+                onError(e.localizedMessage ?: "Failed to save customer")
             }
         }
     }
