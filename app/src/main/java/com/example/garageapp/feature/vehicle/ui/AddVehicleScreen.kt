@@ -26,13 +26,30 @@ import java.util.UUID
 fun AddVehicleScreen(
     customerId: String,
     customerName: String,
+    vehicleId: String? = null,
     onBack: () -> Unit,
     viewModel: AddVehicleViewModel = hiltViewModel()
 ) {
+    val existingVehicle by viewModel.vehicle.collectAsState()
+    
     var vehicleNumber by remember { mutableStateOf("") }
     var model by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     
+    LaunchedEffect(vehicleId) {
+        if (vehicleId != null) {
+            viewModel.loadVehicle(vehicleId)
+        }
+    }
+
+    LaunchedEffect(existingVehicle) {
+        existingVehicle?.let {
+            vehicleNumber = it.vehicleNumber
+            model = it.model
+            notes = it.notes
+        }
+    }
+
     val isSaving by viewModel.isSaving.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -53,7 +70,7 @@ fun AddVehicleScreen(
             TopAppBar(
                 title = { 
                     Column {
-                        Text("Add Vehicle", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text(if (vehicleId == null) "Add Vehicle" else "Edit Vehicle", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                         Text("For: $customerName", fontSize = 12.sp, color = Color.Gray)
                     }
                 },
@@ -129,26 +146,21 @@ fun AddVehicleScreen(
                     if (vehicleNumber.isBlank()) {
                         scope.launch { snackbarHostState.showSnackbar("Vehicle number is required") }
                     } else {
-                        viewModel.addVehicle(
-                            Vehicle(
-                                vehicleId = UUID.randomUUID().toString(),
-                                customerId = customerId,
-                                vehicleNumber = vehicleNumber,
-                                model = model,
-                                notes = notes,
-                                createdAt = System.currentTimeMillis(),
-                                updatedAt = System.currentTimeMillis()
-                            ),
-                            onSuccess = {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar("Vehicle saved successfully")
-                                    onBack()
-                                }
-                            },
-                            onError = { errorMsg ->
-                                scope.launch { snackbarHostState.showSnackbar("Error: $errorMsg") }
-                            }
+                        val vehicle = Vehicle(
+                            vehicleId = vehicleId ?: UUID.randomUUID().toString(),
+                            customerId = customerId,
+                            vehicleNumber = vehicleNumber,
+                            model = model,
+                            notes = notes,
+                            createdAt = existingVehicle?.createdAt ?: System.currentTimeMillis(),
+                            updatedAt = System.currentTimeMillis()
                         )
+
+                        if (vehicleId == null) {
+                            viewModel.addVehicle(vehicle, onSuccess = { onBack() }, onError = { scope.launch { snackbarHostState.showSnackbar(it) } })
+                        } else {
+                            viewModel.updateVehicle(vehicle, onSuccess = { onBack() }, onError = { scope.launch { snackbarHostState.showSnackbar(it) } })
+                        }
                     }
                 },
                 enabled = !isSaving,
@@ -158,13 +170,9 @@ fun AddVehicleScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A237E))
             ) {
                 if (isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
                 } else {
-                    Text("Register Vehicle", fontSize = 18.sp, color = Color.White)
+                    Text(if (vehicleId == null) "Register Vehicle" else "Update Details", fontSize = 18.sp, color = Color.White)
                 }
             }
             Spacer(modifier = Modifier.navigationBarsPadding())

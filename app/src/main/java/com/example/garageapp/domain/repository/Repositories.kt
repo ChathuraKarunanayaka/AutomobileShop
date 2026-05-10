@@ -8,6 +8,7 @@ interface CustomerRepository {
     suspend fun getCustomerById(customerId: String): Customer?
     suspend fun addCustomer(customer: Customer)
     suspend fun updateCustomer(customer: Customer)
+    suspend fun deleteCustomer(customerId: String)
     suspend fun searchCustomers(query: String): List<Customer>
 }
 
@@ -17,6 +18,7 @@ interface VehicleRepository {
     suspend fun getVehicleById(vehicleId: String): Vehicle?
     suspend fun addVehicle(vehicle: Vehicle)
     suspend fun updateVehicle(vehicle: Vehicle)
+    suspend fun deleteVehicle(vehicleId: String)
     suspend fun searchVehicles(query: String): List<Vehicle>
 }
 
@@ -25,6 +27,7 @@ interface JobCardRepository {
     suspend fun getJobCardById(jobCardId: String): JobCard?
     suspend fun addJobCard(jobCard: JobCard)
     suspend fun updateJobCard(jobCard: JobCard)
+    suspend fun deleteJobCard(jobCardId: String)
     suspend fun searchJobCards(query: String): List<JobCard>
 }
 
@@ -33,6 +36,7 @@ interface JobCardItemRepository {
     suspend fun addJobCardItem(item: JobCardItem)
     suspend fun updateJobCardItem(item: JobCardItem)
     suspend fun deleteJobCardItem(itemId: String)
+    suspend fun deleteAllItemsForJobCard(jobCardId: String)
 }
 
 interface InvoiceRepository {
@@ -40,12 +44,14 @@ interface InvoiceRepository {
     suspend fun getInvoiceById(invoiceId: String): Invoice?
     suspend fun addInvoice(invoice: Invoice)
     suspend fun updateInvoice(invoice: Invoice)
+    suspend fun deleteInvoice(invoiceId: String)
     suspend fun searchInvoices(query: String): List<Invoice>
 }
 
 interface PaymentRepository {
     fun getPaymentsForInvoice(invoiceId: String): Flow<List<Payment>>
     suspend fun addPayment(payment: Payment)
+    suspend fun deletePaymentsForInvoice(invoiceId: String)
 }
 
 interface UserRepository {
@@ -59,6 +65,7 @@ interface CounterRepository {
     suspend fun updateCounter(counter: Counter)
     suspend fun getNextJobCardNumber(shopId: String): String
     suspend fun getNextInvoiceNumber(shopId: String, vehicleNumber: String): String
+    suspend fun resetCounters(shopId: String)
 }
 
 interface WorkshopRepository {

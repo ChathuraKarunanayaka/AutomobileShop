@@ -1,5 +1,6 @@
 package com.example.garageapp.data.repository
 
+import com.example.garageapp.core.common.Constants
 import com.example.garageapp.data.mapper.toDomain
 import com.example.garageapp.data.mapper.toEntity
 import com.example.garageapp.domain.model.Customer
@@ -35,6 +36,7 @@ class CustomerRepositoryImpl @Inject constructor(
 
     override suspend fun addCustomer(customer: Customer) {
         val entity = customer.toEntity().copy(
+            shopId = Constants.SHOP_ID,
             searchKeywords = generateSearchKeywords(customer.name, customer.phoneNumber)
         )
         customersRef.document(entity.customerId).set(entity).await()
@@ -42,9 +44,14 @@ class CustomerRepositoryImpl @Inject constructor(
 
     override suspend fun updateCustomer(customer: Customer) {
         val entity = customer.toEntity().copy(
+            shopId = Constants.SHOP_ID,
             searchKeywords = generateSearchKeywords(customer.name, customer.phoneNumber)
         )
         customersRef.document(entity.customerId).set(entity).await()
+    }
+
+    override suspend fun deleteCustomer(customerId: String) {
+        customersRef.document(customerId).delete().await()
     }
 
     override suspend fun searchCustomers(query: String): List<Customer> {
@@ -58,23 +65,16 @@ class CustomerRepositoryImpl @Inject constructor(
 
     private fun generateSearchKeywords(name: String, phone: String): List<String> {
         val keywords = mutableSetOf<String>()
-        
-        // Add name parts
         val nameParts = name.lowercase().split(" ")
         for (part in nameParts) {
             for (i in 1..part.length) {
                 keywords.add(part.substring(0, i))
             }
         }
-        
-        // Add full name for exact matches
         keywords.add(name.lowercase())
-        
-        // Add phone number parts
         for (i in 1..phone.length) {
             keywords.add(phone.substring(0, i))
         }
-        
         return keywords.toList()
     }
 }

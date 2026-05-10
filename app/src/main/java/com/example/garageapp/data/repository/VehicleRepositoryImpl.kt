@@ -51,12 +51,15 @@ class VehicleRepositoryImpl @Inject constructor(
 
     override suspend fun addVehicle(vehicle: Vehicle) {
         val entity = vehicle.toEntity()
-        // We use set().await() to ensure it actually hits the server or fails
         vehiclesRef.document(entity.vehicleId).set(entity).await()
     }
 
     override suspend fun updateVehicle(vehicle: Vehicle) {
         vehiclesRef.document(vehicle.vehicleId).set(vehicle.toEntity()).await()
+    }
+
+    override suspend fun deleteVehicle(vehicleId: String) {
+        vehiclesRef.document(vehicleId).delete().await()
     }
 
     override suspend fun searchVehicles(query: String): List<Vehicle> {

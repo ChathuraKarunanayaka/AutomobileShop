@@ -42,4 +42,13 @@ class JobCardItemRepositoryImpl @Inject constructor(
     override suspend fun deleteJobCardItem(itemId: String) {
         jobCardItemsRef.document(itemId).delete().await()
     }
+
+    override suspend fun deleteAllItemsForJobCard(jobCardId: String) {
+        val snapshot = jobCardItemsRef.whereEqualTo("jobCardId", jobCardId).get().await()
+        val batch = firestore.batch()
+        for (doc in snapshot.documents) {
+            batch.delete(doc.reference)
+        }
+        batch.commit().await()
+    }
 }

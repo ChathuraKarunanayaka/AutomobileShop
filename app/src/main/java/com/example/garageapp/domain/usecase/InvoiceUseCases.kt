@@ -1,5 +1,6 @@
 package com.example.garageapp.domain.usecase
 
+import com.example.garageapp.core.common.Constants
 import com.example.garageapp.domain.model.Invoice
 import com.example.garageapp.domain.model.JobCard
 import com.example.garageapp.domain.model.JobCardItem
@@ -32,7 +33,7 @@ class CreateInvoiceUseCase @Inject constructor(
         discount: Double = 0.0,
         paidAmount: Double = 0.0
     ): Invoice {
-        val shopId = if (jobCard.shopId.isEmpty()) "demo_shop" else jobCard.shopId
+        val shopId = Constants.SHOP_ID
         val invoiceNumber = counterRepository.getNextInvoiceNumber(shopId, jobCard.vehicleNumber)
         
         val subtotal = items.sumOf { it.totalSellingPrice }

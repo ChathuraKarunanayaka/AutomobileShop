@@ -35,4 +35,8 @@ class PaymentRepositoryImpl @Inject constructor(
     override suspend fun addPayment(payment: Payment) {
         paymentsRef.document(payment.paymentId).set(payment.toEntity()).await()
     }
+
+    override suspend fun deletePaymentsForInvoice(invoiceId: String) {
+        TODO("Not yet implemented")
+    }
 }

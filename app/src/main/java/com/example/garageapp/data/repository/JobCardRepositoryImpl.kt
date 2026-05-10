@@ -44,8 +44,11 @@ class JobCardRepositoryImpl @Inject constructor(
         jobCardsRef.document(jobCard.jobCardId).set(jobCard.toEntity()).await()
     }
 
+    override suspend fun deleteJobCard(jobCardId: String) {
+        jobCardsRef.document(jobCardId).delete().await()
+    }
+
     override suspend fun searchJobCards(query: String): List<JobCard> {
-        // Simple search by job card number or customer name snapshot
         val snapshot = jobCardsRef
             .whereGreaterThanOrEqualTo("jobCardNumber", query.uppercase())
             .whereLessThanOrEqualTo("jobCardNumber", query.uppercase() + "\uf8ff")

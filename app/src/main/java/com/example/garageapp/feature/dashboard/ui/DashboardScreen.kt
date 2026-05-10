@@ -35,7 +35,7 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("GARAGE PRO", fontWeight = FontWeight.ExtraBold, letterSpacing = 2.sp) },
+                title = { Text("SU AUTO ELECTRICAL", fontWeight = FontWeight.Bold, letterSpacing = 2.sp) },
                 actions = {
                     IconButton(onClick = onSettingsClick) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")

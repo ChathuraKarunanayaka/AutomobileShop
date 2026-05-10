@@ -2,6 +2,7 @@ package com.example.garageapp.feature.payment.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.garageapp.core.common.Constants
 import com.example.garageapp.domain.model.Payment
 import com.example.garageapp.domain.model.PaymentMethod
 import com.example.garageapp.domain.repository.PaymentRepository
@@ -38,6 +39,7 @@ class AddPaymentViewModel @Inject constructor(
                 // 1. Add payment record
                 val payment = Payment(
                     paymentId = UUID.randomUUID().toString(),
+                    shopId = Constants.SHOP_ID,
                     invoiceId = invoiceId,
                     amount = amount,
                     paymentMethod = method,

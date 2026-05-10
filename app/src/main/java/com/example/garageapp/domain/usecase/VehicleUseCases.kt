@@ -24,8 +24,26 @@ class AddVehicleUseCase @Inject constructor(
     suspend operator fun invoke(vehicle: Vehicle) = vehicleRepository.addVehicle(vehicle)
 }
 
+class UpdateVehicleUseCase @Inject constructor(
+    private val vehicleRepository: VehicleRepository
+) {
+    suspend operator fun invoke(vehicle: Vehicle) = vehicleRepository.updateVehicle(vehicle)
+}
+
+class DeleteVehicleUseCase @Inject constructor(
+    private val vehicleRepository: VehicleRepository
+) {
+    suspend operator fun invoke(vehicleId: String) = vehicleRepository.deleteVehicle(vehicleId)
+}
+
 class SearchVehiclesUseCase @Inject constructor(
     private val vehicleRepository: VehicleRepository
 ) {
     suspend operator fun invoke(query: String): List<Vehicle> = vehicleRepository.searchVehicles(query)
+}
+
+class GetVehicleByIdUseCase @Inject constructor(
+    private val vehicleRepository: VehicleRepository
+) {
+    suspend operator fun invoke(vehicleId: String): Vehicle? = vehicleRepository.getVehicleById(vehicleId)
 }

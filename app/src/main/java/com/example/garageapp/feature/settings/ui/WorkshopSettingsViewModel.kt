@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.garageapp.domain.model.WorkshopDetails
 import com.example.garageapp.domain.usecase.GetWorkshopDetailsUseCase
 import com.example.garageapp.domain.usecase.UpdateWorkshopDetailsUseCase
+import com.example.garageapp.domain.usecase.SignOutUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +16,8 @@ import javax.inject.Inject
 @HiltViewModel
 class WorkshopSettingsViewModel @Inject constructor(
     private val getWorkshopDetailsUseCase: GetWorkshopDetailsUseCase,
-    private val updateWorkshopDetailsUseCase: UpdateWorkshopDetailsUseCase
+    private val updateWorkshopDetailsUseCase: UpdateWorkshopDetailsUseCase,
+    private val signOutUseCase: SignOutUseCase
 ) : ViewModel() {
 
     private val _workshopDetails = MutableStateFlow(WorkshopDetails())
@@ -59,6 +61,12 @@ class WorkshopSettingsViewModel @Inject constructor(
                 _isSaving.value = false
                 onError(e.localizedMessage ?: "Failed to update settings")
             }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            signOutUseCase()
         }
     }
 }

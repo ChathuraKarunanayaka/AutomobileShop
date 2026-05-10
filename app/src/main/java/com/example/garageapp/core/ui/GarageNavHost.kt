@@ -1,7 +1,5 @@
 package com.example.garageapp.core.ui
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,8 +39,9 @@ sealed class Screen(val route: String) {
     object CustomerVehicles : Screen("customer_vehicles/{customerId}/{customerName}") {
         fun createRoute(customerId: String, customerName: String) = "customer_vehicles/$customerId/$customerName"
     }
-    object AddVehicle : Screen("add_vehicle/{customerId}/{customerName}") {
-        fun createRoute(customerId: String, customerName: String) = "add_vehicle/$customerId/$customerName"
+    object AddVehicle : Screen("add_vehicle/{customerId}/{customerName}?vehicleId={vehicleId}") {
+        fun createRoute(customerId: String, customerName: String, vehicleId: String? = null) =
+            "add_vehicle/$customerId/$customerName" + (if (vehicleId != null) "?vehicleId=$vehicleId" else "")
     }
     object CreateJobCard : Screen("create_job_card/{customerId}/{customerName}/{customerPhone}/{vehicleId}/{vehicleNumber}") {
         fun createRoute(customerId: String, customerName: String, customerPhone: String, vehicleId: String, vehicleNumber: String) =
@@ -73,12 +72,12 @@ fun GarageNavHost(
     navController: NavHostController,
     startDestination: String = Screen.Login.route
 ) {
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val authUiState by authViewModel.uiState.collectAsState()
+
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Screen.Login.route) {
-            val viewModel: AuthViewModel = hiltViewModel()
-            val uiState by viewModel.uiState.collectAsState()
-            
-            if (uiState is AuthUiState.Success) {
+            if (authUiState is AuthUiState.Success) {
                 LaunchedEffect(Unit) {
                     navController.navigate(Screen.Dashboard.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
@@ -87,10 +86,10 @@ fun GarageNavHost(
             }
             
             LoginScreen(
-                uiState = uiState,
-                onLogin = { email, password -> viewModel.signIn(email, password) },
-                isLoading = uiState is AuthUiState.Loading,
-                errorMessage = (uiState as? AuthUiState.Error)?.message
+                uiState = authUiState,
+                onLogin = { email, password -> authViewModel.signIn(email, password) },
+                isLoading = authUiState is AuthUiState.Loading,
+                errorMessage = (authUiState as? AuthUiState.Error)?.message
             )
         }
         
@@ -149,6 +148,7 @@ fun GarageNavHost(
                 customerName = customerName,
                 onBack = { navController.popBackStack() },
                 onAddVehicle = { navController.navigate(Screen.AddVehicle.createRoute(customerId, customerName)) },
+                onEditVehicle = { vehicle -> navController.navigate(Screen.AddVehicle.createRoute(customerId, customerName, vehicle.vehicleId)) },
                 onStartJobCard = { vehicle ->
                     navController.navigate(
                         Screen.CreateJobCard.createRoute(
@@ -167,15 +167,18 @@ fun GarageNavHost(
             route = Screen.AddVehicle.route,
             arguments = listOf(
                 navArgument("customerId") { type = NavType.StringType },
-                navArgument("customerName") { type = NavType.StringType }
+                navArgument("customerName") { type = NavType.StringType },
+                navArgument("vehicleId") { type = NavType.StringType; nullable = true; defaultValue = null }
             )
         ) { backStackEntry ->
             val customerId = backStackEntry.arguments?.getString("customerId") ?: ""
             val customerName = backStackEntry.arguments?.getString("customerName") ?: ""
+            val vehicleId = backStackEntry.arguments?.getString("vehicleId")
             
             AddVehicleScreen(
                 customerId = customerId,
                 customerName = customerName,
+                vehicleId = vehicleId,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -302,7 +305,14 @@ fun GarageNavHost(
         }
 
         composable(Screen.Settings.route) {
-            WorkshopSettingsScreen(onBack = { navController.popBackStack() })
+            WorkshopSettingsScreen(
+                onBack = { navController.popBackStack() },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(Screen.Reports.route) {

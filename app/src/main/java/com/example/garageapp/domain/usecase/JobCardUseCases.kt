@@ -1,13 +1,11 @@
 package com.example.garageapp.domain.usecase
 
+import com.example.garageapp.core.common.Constants
 import com.example.garageapp.domain.model.JobCard
 import com.example.garageapp.domain.repository.JobCardRepository
 import com.example.garageapp.domain.repository.CounterRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class GetJobCardsUseCase @Inject constructor(
     private val repository: JobCardRepository
@@ -32,7 +30,7 @@ class AddJobCardUseCase @Inject constructor(
     private val counterRepository: CounterRepository
 ) {
     suspend operator fun invoke(jobCard: JobCard) {
-        val shopId = if (jobCard.shopId.isEmpty()) "demo_shop" else jobCard.shopId
+        val shopId = Constants.SHOP_ID
         val autoNumber = counterRepository.getNextJobCardNumber(shopId)
         val jobCardWithNumber = jobCard.copy(jobCardNumber = autoNumber, shopId = shopId)
         repository.addJobCard(jobCardWithNumber)

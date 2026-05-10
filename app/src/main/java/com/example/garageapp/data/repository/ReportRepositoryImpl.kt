@@ -1,5 +1,6 @@
 package com.example.garageapp.data.repository
 
+import com.example.garageapp.core.common.Constants
 import com.example.garageapp.data.mapper.toDomain
 import com.example.garageapp.data.model.InvoiceEntity
 import com.example.garageapp.data.model.JobCardItemEntity
@@ -18,7 +19,9 @@ class ReportRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore
 ) : ReportRepository {
 
-    private fun getDailyStatsCollection(shopId: String) = 
+    private val shopId = Constants.SHOP_ID
+
+    private fun getDailyStatsCollection() = 
         firestore.collection("shops").document(shopId).collection("reports_daily")
 
     override fun getDailyStats(date: Long): Flow<DailyStats?> = callbackFlow {
@@ -31,9 +34,8 @@ class ReportRepositoryImpl @Inject constructor(
         val normalizedDate = calendar.timeInMillis
         
         val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(normalizedDate))
-        val shopId = "demo_shop" 
         
-        val listener = getDailyStatsCollection(shopId).document(dateStr)
+        val listener = getDailyStatsCollection().document(dateStr)
             .addSnapshotListener { snapshot, _ ->
                 if (snapshot != null && snapshot.exists()) {
                     try {
@@ -50,9 +52,7 @@ class ReportRepositoryImpl @Inject constructor(
     }
 
     override fun getStatsForPeriod(startDate: Long, endDate: Long): Flow<List<DailyStats>> = callbackFlow {
-        val shopId = "demo_shop"
-        
-        val listener = getDailyStatsCollection(shopId)
+        val listener = getDailyStatsCollection()
             .whereGreaterThanOrEqualTo("date", startDate)
             .whereLessThanOrEqualTo("date", endDate)
             .addSnapshotListener { snapshot, _ ->
@@ -69,7 +69,6 @@ class ReportRepositoryImpl @Inject constructor(
     }
 
     override suspend fun calculateAndStoreDailyStats(date: Long) {
-        val shopId = "demo_shop"
         val calendar = Calendar.getInstance()
         calendar.timeInMillis = date
         calendar.set(Calendar.HOUR_OF_DAY, 0)
@@ -78,18 +77,19 @@ class ReportRepositoryImpl @Inject constructor(
         calendar.set(Calendar.MILLISECOND, 0)
         val startOfDay = calendar.timeInMillis
         
-        calendar.add(Calendar.DAY_OF_YEAR, 1)
+        calendar.set(Calendar.HOUR_OF_DAY, 23)
+        calendar.set(Calendar.MINUTE, 59)
+        calendar.set(Calendar.SECOND, 59)
+        calendar.set(Calendar.MILLISECOND, 999)
         val endOfDay = calendar.timeInMillis
 
         try {
+            // Get all invoices for this shop on this date
             val invoices = firestore.collection("invoices")
-                .whereEqualTo("shopId", shopId)
                 .whereGreaterThanOrEqualTo("createdAt", startOfDay)
                 .whereLessThanOrEqualTo("createdAt", endOfDay)
                 .get().await().toObjects(InvoiceEntity::class.java)
-                .mapNotNull { entity ->
-                    try { entity.toDomain() } catch (e: Exception) { null }
-                }
+                .filter { it.shopId == shopId } // Filter locally
 
             var totalSales = 0.0
             var totalPaid = 0.0
@@ -105,6 +105,7 @@ class ReportRepositoryImpl @Inject constructor(
                 totalPaid += invoice.paidAmount
                 totalBalance += invoice.balanceAmount
                 
+                // Fetch all items for the job card associated with this invoice
                 val items = firestore.collection("jobCardItems")
                     .whereEqualTo("jobCardId", invoice.jobCardId)
                     .get().await().toObjects(JobCardItemEntity::class.java)
@@ -122,6 +123,7 @@ class ReportRepositoryImpl @Inject constructor(
                     totalCost += item.totalCost
                     totalProfit += item.profit
                 }
+                // Important: Subtract discount from invoice-level profit
                 totalProfit -= invoice.discount
             }
 
@@ -140,7 +142,7 @@ class ReportRepositoryImpl @Inject constructor(
             )
 
             val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(date))
-            getDailyStatsCollection(shopId).document(dateStr).set(dailyStats).await()
+            getDailyStatsCollection().document(dateStr).set(dailyStats).await()
         } catch (e: Exception) {
             e.printStackTrace()
         }

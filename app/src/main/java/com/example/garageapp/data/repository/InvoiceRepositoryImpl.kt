@@ -44,10 +44,11 @@ class InvoiceRepositoryImpl @Inject constructor(
         invoicesRef.document(invoice.invoiceId).set(invoice.toEntity()).await()
     }
 
+    override suspend fun deleteInvoice(invoiceId: String) {
+        invoicesRef.document(invoiceId).delete().await()
+    }
+
     override suspend fun searchInvoices(query: String): List<Invoice> {
-        // Simplified search, Firestore doesn't support partial match well without third party
-        // For MVP, we can fetch all or a subset and filter locally if needed, 
-        // or just rely on the Flow and local filtering in ViewModel.
         val snapshot = invoicesRef.get().await()
         return snapshot.documents.mapNotNull { 
             it.toObject(com.example.garageapp.data.model.InvoiceEntity::class.java)?.toDomain() 

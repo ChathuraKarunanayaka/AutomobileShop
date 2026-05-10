@@ -5,9 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,16 +24,21 @@ fun VehicleListScreen(
     customerName: String,
     onBack: () -> Unit,
     onAddVehicle: () -> Unit,
+    onEditVehicle: (Vehicle) -> Unit,
     onStartJobCard: (Vehicle) -> Unit,
     viewModel: VehicleListViewModel = hiltViewModel()
 ) {
     val vehicles by viewModel.vehicles.collectAsState()
+    val isDeleting by viewModel.isDeleting.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(customerId) {
         viewModel.loadVehiclesForCustomer(customerId)
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -96,11 +99,35 @@ fun VehicleListScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(vehicles) { vehicle ->
+                    items(vehicles, key = { it.vehicleId }) { vehicle ->
                         VehicleCard(
                             vehicle = vehicle,
-                            onStartJobCard = { onStartJobCard(vehicle) }
+                            onStartJobCard = { onStartJobCard(vehicle) },
+                            onEdit = { onEditVehicle(vehicle) },
+                            onDelete = {
+                                viewModel.deleteVehicle(
+                                    vehicleId = vehicle.vehicleId,
+                                    onSuccess = {
+                                        // UI updates automatically via Flow, but we can show a snackbar
+                                        // scope.launch { snackbarHostState.showSnackbar("Vehicle deleted") }
+                                    },
+                                    onError = { error ->
+                                        // scope.launch { snackbarHostState.showSnackbar(error) }
+                                    }
+                                )
+                            }
                         )
+                    }
+                }
+            }
+
+            if (isDeleting) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = Color.Black.copy(alpha = 0.3f)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color.White)
                     }
                 }
             }
@@ -109,7 +136,35 @@ fun VehicleListScreen(
 }
 
 @Composable
-fun VehicleCard(vehicle: Vehicle, onStartJobCard: () -> Unit) {
+fun VehicleCard(
+    vehicle: Vehicle,
+    onStartJobCard: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Delete Vehicle") },
+            text = { Text("Are you sure you want to delete this vehicle? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    onDelete()
+                    showDeleteConfirm = false
+                }) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -127,9 +182,17 @@ fun VehicleCard(vehicle: Vehicle, onStartJobCard: () -> Unit) {
                     }
                 }
                 Spacer(modifier = Modifier.width(16.dp))
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(text = vehicle.vehicleNumber, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A237E))
                     Text(text = vehicle.model, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF424242))
+                }
+                
+                // Actions
+                IconButton(onClick = onEdit) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.Gray)
+                }
+                IconButton(onClick = { showDeleteConfirm = true }) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f))
                 }
             }
             
